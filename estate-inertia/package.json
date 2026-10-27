@@ -1,0 +1,8 @@
+{
+  "name": "estate-inertia",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["client", "server"],
+  "scripts": {"dev": "concurrently -n API,WEB -c blue,green \"npm:dev:server\" \"npm:dev:client\"", "dev:server": "npm --workspace server run dev", "dev:client": "npm --workspace client run dev", "db:generate": "npm --workspace server run db:generate", "db:migrate": "npm --workspace server run db:migrate"},
+  "devDependencies": {"concurrently": "^9.1.2"}
+}
