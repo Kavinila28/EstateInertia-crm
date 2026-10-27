@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Activity,
+  ArrowDownRight,
   ArrowUpRight,
   Bell,
   Building2,
@@ -25,6 +26,8 @@ import {
   X,
 } from 'lucide-react';
 
+type PropertyStatus = 'Available' | 'Reserved' | 'Sold';
+
 type Property = {
   id: string;
   name: string;
@@ -33,7 +36,7 @@ type Property = {
   type: string;
   area: string;
   price: string;
-  status: 'Available' | 'Reserved' | 'Sold';
+  status: PropertyStatus;
   updated: string;
 };
 
@@ -95,43 +98,68 @@ const initialProperties: Property[] = [
   },
 ];
 
-const nav = [
+const navigation = [
   {
-    title: 'WORKSPACE',
+    group: 'WORKSPACE',
     items: [
-      ['Overview', LayoutDashboard],
-      ['Properties', Building2],
-      ['Projects', Map],
-      ['Leads', Users],
-      ['Follow-ups', CalendarDays],
+      { label: 'Overview', icon: LayoutDashboard },
+      { label: 'Properties', icon: Building2 },
+      { label: 'Projects', icon: Map },
+      { label: 'Leads', icon: Users },
+      { label: 'Follow-ups', icon: CalendarDays },
     ],
   },
   {
-    title: 'MANAGE',
+    group: 'MANAGE',
     items: [
-      ['Documents', FileText],
-      ['Analytics', Activity],
-      ['AI Assistant', Sparkles],
+      { label: 'Documents', icon: FileText },
+      { label: 'Analytics', icon: Activity },
+      { label: 'AI Assistant', icon: Sparkles },
     ],
   },
-] as const;
+];
 
 function BrandMark() {
   return (
     <div className="flex items-center gap-3">
-      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-[#173e35] text-white shadow-sm">
-        <Command size={20} strokeWidth={1.8} />
-        <span className="absolute bottom-[9px] right-[9px] h-1.5 w-1.5 rounded-full bg-[#b9d7c7]" />
+      <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-[#173e35] text-white">
+        <Command size={20} />
+        <span className="absolute bottom-2 right-2 h-1.5 w-1.5 rounded-full bg-[#b9d7c7]" />
       </div>
       <div>
-        <div className="text-[15px] font-semibold tracking-[-.03em] text-[#172337]">
+        <div className="text-[15px] font-semibold tracking-tight text-[#172337]">
           Estate Inertia
         </div>
-        <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[.16em] text-[#829087]">
+        <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[.16em] text-slate-400">
           Property workspace
         </div>
       </div>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: PropertyStatus }) {
+  const styles: Record<PropertyStatus, string> = {
+    Available: 'bg-emerald-50 text-emerald-700',
+    Reserved: 'bg-amber-50 text-amber-700',
+    Sold: 'bg-slate-100 text-slate-600',
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-medium ${styles[status]}`}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${
+          status === 'Available'
+            ? 'bg-emerald-500'
+            : status === 'Reserved'
+              ? 'bg-amber-500'
+              : 'bg-slate-400'
+        }`}
+      />
+      {status}
+    </span>
   );
 }
 
@@ -141,110 +169,127 @@ function App() {
   const [status, setStatus] = useState('All statuses');
   const [mobileNav, setMobileNav] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
-  const [properties, setProperties] = useState(initialProperties);
+  const [properties, setProperties] = useState<Property[]>(initialProperties);
   const [newName, setNewName] = useState('');
   const [newProject, setNewProject] = useState('');
   const [notice, setNotice] = useState('');
 
-  const filtered = useMemo(
-    () =>
-      properties.filter(
-        (p) =>
-          `${p.name} ${p.project} ${p.location} ${p.id}`
-            .toLowerCase()
-            .includes(query.toLowerCase()) &&
-          (status === 'All statuses' || p.status === status),
-      ),
-    [properties, query, status],
-  );
+  const filteredProperties = useMemo(() => {
+    const search = query.trim().toLowerCase();
+
+    return properties.filter((property) => {
+      const matchesSearch =
+        !search ||
+        [
+          property.id,
+          property.name,
+          property.project,
+          property.location,
+          property.type,
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(search);
+
+      const matchesStatus =
+        status === 'All statuses' || property.status === status;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [properties, query, status]);
 
   const addProperty = () => {
-    if (!newName.trim() || !newProject.trim()) return;
+    if (!newName.trim() || !newProject.trim()) {
+      setNotice('Enter both the property name and project name.');
+      return;
+    }
 
-    setProperties((current) => [
-      {
-        id: `EI-${1000 + current.length + 1}`,
-        name: newName,
-        project: newProject,
-        location: 'Location to be added',
-        type: 'Residential plot',
-        area: '—',
-        price: 'Not set',
-        status: 'Available',
-        updated: 'Just now',
-      },
-      ...current,
-    ]);
+    const property: Property = {
+      id: `EI-${1001 + properties.length}`,
+      name: newName.trim(),
+      project: newProject.trim(),
+      location: 'Location to be added',
+      type: 'Residential plot',
+      area: 'Not specified',
+      price: 'Not specified',
+      status: 'Available',
+      updated: 'Just now',
+    };
 
+    setProperties((current) => [property, ...current]);
     setNewName('');
     setNewProject('');
     setShowAdd(false);
     setNotice(
-      'Property added to this preview. Connect the API to save records permanently.',
+      'Property added to the preview. Connect a backend to save it permanently.',
     );
   };
 
+  const openModule = (module: string) => {
+    setActive(module);
+    setMobileNav(false);
+  };
+
   return (
-    <div className="min-h-screen bg-canvas text-ink">
+    <div className="min-h-screen bg-[#f7f8fa] text-[#202b3c]">
       {mobileNav && (
         <button
-          aria-label="Close menu"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-30 bg-black/30 lg:hidden"
           onClick={() => setMobileNav(false)}
-          className="fixed inset-0 z-30 bg-slate-950/35 lg:hidden"
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[254px] flex-col border-r border-[#e7ebf1] bg-white px-5 pb-4 pt-6 transition-transform lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-[254px] flex-col border-r border-slate-200 bg-white px-5 pb-4 pt-6 transition-transform ${
           mobileNav ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        } lg:translate-x-0`}
       >
         <div className="flex items-center justify-between">
           <BrandMark />
           <button
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 lg:hidden"
+            aria-label="Close menu"
             onClick={() => setMobileNav(false)}
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 lg:hidden"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="mt-9 rounded-xl border border-[#e8edea] bg-[#f7faf8] p-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#dcebe4] text-[#173e35]">
-              <Building2 size={16} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-semibold">Your company</div>
-              <div className="mt-0.5 text-[11px] text-slate-500">
-                Team workspace
-              </div>
-            </div>
-            <ChevronDown size={14} className="text-slate-400" />
+        <button
+          onClick={() => setNotice('Company settings will be available soon.')}
+          className="mt-9 flex items-center gap-3 rounded-xl border border-slate-200 bg-[#f7faf8] p-3 text-left"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#dcebe4] text-[#173e35]">
+            <Building2 size={16} />
           </div>
-        </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-semibold">Your company</div>
+            <div className="mt-0.5 text-[11px] text-slate-500">
+              Team workspace
+            </div>
+          </div>
+          <ChevronDown size={14} className="text-slate-400" />
+        </button>
 
         <nav className="mt-8 flex-1 space-y-7">
-          {nav.map((group) => (
-            <div key={group.title}>
-              <div className="mb-2 px-3 text-[10px] font-bold tracking-[.16em] text-[#9aa4b2]">
-                {group.title}
+          {navigation.map((group) => (
+            <div key={group.group}>
+              <div className="mb-2 px-3 text-[10px] font-bold tracking-[.16em] text-slate-400">
+                {group.group}
               </div>
               <div className="space-y-1">
-                {group.items.map(([label, Icon]) => (
+                {group.items.map(({ label, icon: Icon }) => (
                   <button
                     key={label}
-                    onClick={() => {
-                      setActive(label);
-                      setMobileNav(false);
-                    }}
+                    onClick={() => openModule(label)}
                     className={`flex w-full items-center gap-3 rounded-lg px-3 py-[10px] text-left text-[13px] transition ${
                       active === label
                         ? 'bg-[#eaf2ed] font-semibold text-[#173e35]'
-                        : 'text-[#687589] hover:bg-slate-50 hover:text-ink'
+                        : 'text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    <Icon size={17} strokeWidth={1.8} />
+                    <Icon size={17} />
                     <span className="flex-1">{label}</span>
                     {label === 'Leads' && (
                       <span className="rounded-md bg-white px-1.5 py-0.5 text-[10px] text-slate-500">
@@ -260,13 +305,11 @@ function App() {
 
         <div className="rounded-xl bg-[#f7f8fa] p-3">
           <div className="flex items-center gap-2">
-            <ShieldCheck size={15} className="text-[#477760]" />
-            <span className="text-xs font-semibold">
-              Your data, in one place
-            </span>
+            <ShieldCheck size={15} className="text-emerald-700" />
+            <span className="text-xs font-semibold">Property workspace</span>
           </div>
           <p className="mb-0 mt-1.5 text-[11px] leading-5 text-slate-500">
-            A shared view of property details, availability and ownership.
+            Manage inventory, projects and customer relationships together.
           </p>
         </div>
 
@@ -275,21 +318,15 @@ function App() {
             EI
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-xs font-semibold">
-              Workspace Admin
-            </div>
+            <div className="truncate text-xs font-semibold">Workspace Admin</div>
             <div className="truncate text-[10px] text-slate-500">
               Company administrator
             </div>
           </div>
           <button
+            aria-label="Settings"
+            onClick={() => setNotice('Settings module is coming soon.')}
             className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100"
-            title="Settings"
-            onClick={() =>
-              setNotice(
-                'Settings will be connected to your account profile in the next phase.',
-              )
-            }
           >
             <Settings size={16} />
           </button>
@@ -297,7 +334,7 @@ function App() {
       </aside>
 
       <main className="min-h-screen lg:pl-[254px]">
-        <header className="sticky top-0 z-20 flex h-[70px] items-center justify-between border-b border-[#e7ebf1] bg-white/95 px-4 backdrop-blur sm:px-7 lg:px-9">
+        <header className="sticky top-0 z-20 flex h-[70px] items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur sm:px-7 lg:px-9">
           <div className="flex items-center gap-3">
             <button
               aria-label="Open navigation"
@@ -318,23 +355,24 @@ function App() {
             <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-[#fafbfc] px-3 py-2 md:flex">
               <Search size={15} className="text-slate-400" />
               <input
+                type="search"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search your workspace..."
                 className="w-40 bg-transparent text-xs outline-none placeholder:text-slate-400 lg:w-52"
               />
               <kbd className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] text-slate-400">
-                ⌘ K
+                Ctrl K
               </kbd>
             </div>
 
             <button
-              className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100"
               aria-label="Notifications"
-              onClick={() => setNotice('You are all caught up on this preview.')}
+              onClick={() => setNotice('You are all caught up in this preview.')}
+              className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100"
             >
               <Bell size={18} />
-              <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#4f8a6c] ring-2 ring-white" />
+              <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-white" />
             </button>
 
             <div className="hidden h-7 w-px bg-slate-200 sm:block" />
@@ -352,9 +390,12 @@ function App() {
 
         <div className="mx-auto max-w-[1440px] px-4 py-7 sm:px-7 sm:py-9 lg:px-9">
           {notice && (
-            <div className="mb-5 flex items-start justify-between gap-3 rounded-lg border border-[#d8e8de] bg-[#f0f7f2] px-4 py-3 text-xs text-[#285c43]">
+            <div className="mb-5 flex items-start justify-between gap-3 rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-xs text-emerald-800">
               <span>{notice}</span>
-              <button onClick={() => setNotice('')}>
+              <button
+                aria-label="Dismiss message"
+                onClick={() => setNotice('')}
+              >
                 <X size={14} />
               </button>
             </div>
@@ -364,16 +405,16 @@ function App() {
             <>
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                 <div>
-                  <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[.15em] text-[#5e8b73]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#5e8b73]" />
+                  <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[.15em] text-emerald-700">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
                     PROPERTY INVENTORY, IN ONE PLACE
                   </div>
                   <h1 className="text-[27px] font-semibold tracking-[-.045em] sm:text-[32px]">
                     Bring every property into clear view.
                   </h1>
-                  <p className="mt-2 max-w-xl text-[13px] leading-6 text-[#758195]">
-                    A clearer way to manage your property inventory, projects,
-                    availability and customer relationships.
+                  <p className="mt-2 max-w-xl text-[13px] leading-6 text-slate-500">
+                    Manage property inventory, projects, availability and
+                    customer relationships from one workspace.
                   </p>
                 </div>
                 <button
@@ -388,41 +429,40 @@ function App() {
                 {[
                   {
                     label: 'Property records',
-                    value: String(properties.length).padStart(2, '0'),
-                    note: 'In this preview',
+                    value: properties.length,
+                    note: 'Records in this preview',
                     icon: Building2,
-                    trend: '+8.2%',
+                    trend: 'Inventory',
                   },
                   {
                     label: 'Available units',
-                    value: String(
-                      properties.filter((p) => p.status === 'Available').length,
-                    ).padStart(2, '0'),
-                    note: 'Tracked by status',
+                    value: properties.filter((p) => p.status === 'Available')
+                      .length,
+                    note: 'Currently available',
                     icon: Check,
-                    trend: 'Live status',
+                    trend: 'Available',
                   },
                   {
                     label: 'Active leads',
-                    value: '12',
+                    value: 12,
                     note: 'Sample dashboard metric',
                     icon: Users,
-                    trend: '+12.4%',
+                    trend: 'Sample data',
                   },
                   {
                     label: 'Follow-ups due',
-                    value: '04',
+                    value: 4,
                     note: 'Sample dashboard metric',
                     icon: CalendarDays,
                     trend: 'Today',
                   },
-                ].map((item, i) => (
+                ].map((item, index) => (
                   <div
                     key={item.label}
-                    className="rounded-xl border border-[#e7ebf1] bg-white p-5 shadow-soft"
+                    className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-[#778396]">
+                      <span className="text-xs font-medium text-slate-500">
                         {item.label}
                       </span>
                       <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f1f5f2] text-[#477760]">
@@ -430,16 +470,18 @@ function App() {
                       </span>
                     </div>
                     <div className="mt-4 flex items-end justify-between">
-                      <span className="text-[29px] font-semibold tracking-[-.05em]">
-                        {item.value}
+                      <span className="text-[29px] font-semibold tracking-tight">
+                        {String(item.value).padStart(2, '0')}
                       </span>
-                      <span className="mb-1 inline-flex items-center gap-1 text-[10px] font-medium text-[#598268]">
-                        {i === 1 ? (
+                      <span className="mb-1 inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700">
+                        {index === 1 ? (
                           <Check size={12} />
-                        ) : i === 3 ? (
+                        ) : index === 3 ? (
                           <CalendarDays size={12} />
-                        ) : (
+                        ) : index === 2 ? (
                           <ArrowUpRight size={12} />
+                        ) : (
+                          <ArrowDownRight size={12} />
                         )}
                         {item.trend}
                       </span>
@@ -452,14 +494,14 @@ function App() {
               </div>
 
               <div className="mt-7 grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
-                <section className="min-w-0 overflow-hidden rounded-xl border border-[#e7ebf1] bg-white shadow-soft">
+                <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                   <div className="flex flex-col justify-between gap-3 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center">
                     <div>
                       <h2 className="text-sm font-semibold tracking-tight">
                         Property register
                       </h2>
                       <p className="mt-1 text-[11px] text-slate-400">
-                        Properties your team has added to the workspace
+                        Property records and availability
                       </p>
                     </div>
 
@@ -467,8 +509,9 @@ function App() {
                       <div className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 md:hidden">
                         <Search size={14} className="text-slate-400" />
                         <input
+                          type="search"
                           value={query}
-                          onChange={(e) => setQuery(e.target.value)}
+                          onChange={(event) => setQuery(event.target.value)}
                           placeholder="Search inventory"
                           className="w-32 text-xs outline-none"
                         />
@@ -478,7 +521,7 @@ function App() {
                         <Filter size={13} className="text-slate-400" />
                         <select
                           value={status}
-                          onChange={(e) => setStatus(e.target.value)}
+                          onChange={(event) => setStatus(event.target.value)}
                           className="max-w-[130px] bg-transparent text-[11px] text-slate-600 outline-none"
                         >
                           <option>All statuses</option>
@@ -489,13 +532,13 @@ function App() {
                       </div>
 
                       <button
+                        aria-label="More filters"
                         className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"
                         onClick={() =>
                           setNotice(
-                            'Advanced filters will be added with the inventory API.',
+                            'More filters can be connected when the inventory API is added.',
                           )
                         }
-                        aria-label="More filters"
                       >
                         <MoreHorizontal size={16} />
                       </button>
@@ -505,24 +548,22 @@ function App() {
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[720px] text-left">
                       <thead>
-                        <tr className="bg-[#fafbfc] text-[10px] font-semibold uppercase tracking-[.09em] text-[#9aa4b2]">
+                        <tr className="bg-[#fafbfc] text-[10px] font-semibold uppercase tracking-[.09em] text-slate-400">
                           <th className="px-5 py-3 font-semibold">Property</th>
                           <th className="px-4 py-3 font-semibold">
                             Project / location
                           </th>
                           <th className="px-4 py-3 font-semibold">Area</th>
                           <th className="px-4 py-3 font-semibold">Price</th>
-                          <th className="px-4 py-3 font-semibold">
-                            Availability
-                          </th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
                           <th className="px-4 py-3 font-semibold">Updated</th>
                         </tr>
                       </thead>
 
                       <tbody className="divide-y divide-slate-100">
-                        {filtered.map((p) => (
+                        {filteredProperties.map((property) => (
                           <tr
-                            key={p.id}
+                            key={property.id}
                             className="transition hover:bg-[#fbfcfb]"
                           >
                             <td className="px-5 py-4">
@@ -531,64 +572,41 @@ function App() {
                                   <Building2 size={16} />
                                 </div>
                                 <div>
-                                  <div className="whitespace-nowrap text-xs font-semibold text-[#263448]">
-                                    {p.name}
+                                  <div className="whitespace-nowrap text-xs font-semibold">
+                                    {property.name}
                                   </div>
                                   <div className="mt-1 text-[10px] text-slate-400">
-                                    {p.id} · {p.type}
+                                    {property.id} · {property.type}
                                   </div>
                                 </div>
                               </div>
                             </td>
-
                             <td className="px-4 py-4">
                               <div className="whitespace-nowrap text-xs font-medium">
-                                {p.project}
+                                {property.project}
                               </div>
                               <div className="mt-1 whitespace-nowrap text-[10px] text-slate-400">
-                                {p.location}
+                                {property.location}
                               </div>
                             </td>
-
                             <td className="whitespace-nowrap px-4 py-4 text-xs text-slate-600">
-                              {p.area}
+                              {property.area}
                             </td>
                             <td className="whitespace-nowrap px-4 py-4 text-xs font-semibold">
-                              {p.price}
+                              {property.price}
                             </td>
-
                             <td className="px-4 py-4">
-                              <span
-                                className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-medium ${
-                                  p.status === 'Available'
-                                    ? 'bg-[#e9f5ed] text-[#3c7a53]'
-                                    : p.status === 'Reserved'
-                                      ? 'bg-[#fff4dd] text-[#a36a18]'
-                                      : 'bg-slate-100 text-slate-500'
-                                }`}
-                              >
-                                <span
-                                  className={`h-1.5 w-1.5 rounded-full ${
-                                    p.status === 'Available'
-                                      ? 'bg-[#54a36e]'
-                                      : p.status === 'Reserved'
-                                        ? 'bg-[#d49a38]'
-                                        : 'bg-slate-400'
-                                  }`}
-                                />
-                                {p.status}
-                              </span>
+                              <StatusBadge status={property.status} />
                             </td>
-
                             <td className="whitespace-nowrap px-4 py-4 text-[10px] text-slate-400">
-                              {p.updated}
+                              {property.updated}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
 
-                    {filtered.length === 0 && (
+                    {filteredProperties.length === 0 && (
                       <div className="px-6 py-12 text-center">
                         <Search
                           size={22}
@@ -598,7 +616,7 @@ function App() {
                           No properties found
                         </p>
                         <p className="mt-1 text-xs text-slate-400">
-                          Try another search or change the status filter.
+                          Try a different search or status.
                         </p>
                       </div>
                     )}
@@ -606,18 +624,24 @@ function App() {
 
                   <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3.5">
                     <span className="text-[10px] text-slate-400">
-                      Showing {filtered.length} of {properties.length} preview
+                      Showing {filteredProperties.length} of {properties.length}{' '}
                       records
                     </span>
                     <div className="flex gap-1">
                       <button
                         aria-label="Previous page"
+                        onClick={() =>
+                          setNotice('Pagination will be connected to the API.')
+                        }
                         className="rounded-md border border-slate-200 p-1.5 text-slate-400"
                       >
                         <ChevronLeft size={14} />
                       </button>
                       <button
                         aria-label="Next page"
+                        onClick={() =>
+                          setNotice('Pagination will be connected to the API.')
+                        }
                         className="rounded-md border border-slate-200 p-1.5 text-slate-400"
                       >
                         <ChevronRight size={14} />
@@ -627,7 +651,7 @@ function App() {
                 </section>
 
                 <aside className="space-y-5">
-                  <div className="rounded-xl border border-[#e7ebf1] bg-white p-5 shadow-soft">
+                  <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="flex items-center justify-between">
                       <h2 className="text-sm font-semibold">
                         Workspace activity
@@ -636,7 +660,7 @@ function App() {
                         aria-label="Activity options"
                         onClick={() =>
                           setNotice(
-                            'Activity history will be stored once the backend is connected.',
+                            'Activity history requires a connected backend.',
                           )
                         }
                       >
@@ -646,30 +670,29 @@ function App() {
                         />
                       </button>
                     </div>
-
                     <p className="mt-1 text-[11px] text-slate-400">
-                      Recent changes across your workspace
+                      Recent workspace updates
                     </p>
 
                     <div className="mt-5 space-y-5">
                       {[
                         {
                           icon: Building2,
-                          color: 'bg-[#e9f3ec] text-[#4e8061]',
+                          color: 'bg-emerald-50 text-emerald-700',
                           title: 'Property added',
                           desc: 'Plot 018 · North Avenue',
                           time: '12 min ago',
                         },
                         {
                           icon: Users,
-                          color: 'bg-[#eef0fb] text-[#646fa5]',
+                          color: 'bg-indigo-50 text-indigo-600',
                           title: 'Lead status updated',
-                          desc: 'Priya S. · Site visit scheduled',
+                          desc: 'Site visit scheduled',
                           time: '46 min ago',
                         },
                         {
                           icon: FileText,
-                          color: 'bg-[#fff4df] text-[#b08336]',
+                          color: 'bg-amber-50 text-amber-700',
                           title: 'Document uploaded',
                           desc: 'Greenfield · Layout plan',
                           time: '2 hrs ago',
@@ -697,10 +720,10 @@ function App() {
                     </div>
 
                     <button
-                      onClick={() => setActive('Analytics')}
+                      onClick={() => openModule('Analytics')}
                       className="mt-5 w-full rounded-lg border border-slate-200 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
                     >
-                      View activity history <span className="ml-1">→</span>
+                      View activity history →
                     </button>
                   </div>
 
@@ -712,11 +735,11 @@ function App() {
                       Your property data, clearer.
                     </div>
                     <p className="mt-2 text-[11px] leading-5 text-white/70">
-                      Keep project details, unit availability and team
-                      ownership connected in one place.
+                      Keep project details, availability and team ownership
+                      connected in one place.
                     </p>
                     <button
-                      onClick={() => setActive('AI Assistant')}
+                      onClick={() => openModule('AI Assistant')}
                       className="mt-4 flex items-center gap-2 text-xs font-semibold text-[#d4eadc] hover:text-white"
                     >
                       Explore AI assistant <ArrowUpRight size={14} />
@@ -727,13 +750,11 @@ function App() {
 
               <div className="mt-6 flex flex-col justify-between gap-2 border-t border-slate-200 pt-4 text-[10px] text-slate-400 sm:flex-row">
                 <span>Estate Inertia · Property workspace</span>
-                <span>
-                  Preview data only · PostgreSQL integration pending
-                </span>
+                <span>Preview data only · Backend integration pending</span>
               </div>
             </>
           ) : (
-            <div className="rounded-xl border border-[#e7ebf1] bg-white p-8 shadow-soft sm:p-12">
+            <section className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm sm:p-12">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#eaf2ed] text-[#173e35]">
                 {active === 'AI Assistant' ? (
                   <Sparkles size={22} />
@@ -751,30 +772,27 @@ function App() {
                   <Building2 size={22} />
                 )}
               </div>
-
               <h1 className="mt-5 text-2xl font-semibold tracking-tight">
                 {active}
               </h1>
               <p className="mt-2 max-w-lg text-sm leading-6 text-slate-500">
-                This module is part of the Estate Inertia build plan. The
-                navigation is in place; its database-backed workflows will be
-                implemented in the next development phases.
+                This module is part of the Estate Inertia workspace. Its
+                database-backed workflows can be connected as the backend is
+                implemented.
               </p>
-
-              <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#f3f5f6] px-3 py-1.5 text-[11px] font-medium text-slate-500">
+              <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-medium text-slate-500">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                 UI scaffold · API integration pending
               </div>
-
               <div className="mt-8">
                 <button
-                  onClick={() => setActive('Overview')}
+                  onClick={() => openModule('Overview')}
                   className="rounded-lg bg-[#173e35] px-4 py-2.5 text-xs font-semibold text-white"
                 >
                   Back to overview
                 </button>
               </div>
-            </div>
+            </section>
           )}
         </div>
       </main>
@@ -786,10 +804,11 @@ function App() {
               <div>
                 <h2 className="text-lg font-semibold">Add a property</h2>
                 <p className="mt-1 text-xs text-slate-500">
-                  Add a record to this local preview.
+                  Create a property record in this preview.
                 </p>
               </div>
               <button
+                aria-label="Close add property dialog"
                 onClick={() => setShowAdd(false)}
                 className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"
               >
@@ -797,16 +816,23 @@ function App() {
               </button>
             </div>
 
-            <div className="mt-5 space-y-4">
+            <form
+              className="mt-5 space-y-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                addProperty();
+              }}
+            >
               <label className="block">
                 <span className="mb-1.5 block text-xs font-medium">
                   Property name
                 </span>
                 <input
                   value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
+                  onChange={(event) => setNewName(event.target.value)}
                   placeholder="e.g. Plot 024 · East Avenue"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#709984]"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-700"
+                  required
                 />
               </label>
 
@@ -816,25 +842,26 @@ function App() {
                 </span>
                 <input
                   value={newProject}
-                  onChange={(e) => setNewProject(e.target.value)}
+                  onChange={(event) => setNewProject(event.target.value)}
                   placeholder="e.g. Greenfield Enclave"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#709984]"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-emerald-700"
+                  required
                 />
               </label>
 
-              <div className="rounded-lg bg-amber-50 px-3 py-2.5 text-[11px] leading-5 text-amber-800">
-                Preview only: this record resets on refresh until the API and
-                database are connected.
-              </div>
+              <p className="rounded-lg bg-amber-50 px-3 py-2.5 text-[11px] leading-5 text-amber-800">
+                Preview only: records will reset on refresh until the backend
+                and database are connected.
+              </p>
 
               <button
-                onClick={addProperty}
+                type="submit"
                 disabled={!newName.trim() || !newProject.trim()}
                 className="w-full rounded-lg bg-[#173e35] px-4 py-3 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Add property
               </button>
-            </div>
+            </form>
           </div>
         </div>
       )}
