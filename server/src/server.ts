@@ -1,0 +1,17 @@
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import {pool} from "./db.js";
+import {initializeSchema} from "./schema.js";
+import {propertiesRouter} from "./routes/properties.js";
+const app=express();app.disable("x-powered-by");app.use(helmet());
+const origins=(process.env.FRONTEND_URL??"http://localhost:5173").split(",").map(x=>x.trim());
+app.use(cors({origin:(origin,cb)=>!origin||origins.includes(origin)?cb(null,true):cb(new Error("Origin not allowed by CORS"))}));
+app.use(express.json({limit:"1mb"}));
+app.get("/api/health",async(_req,res)=>{try{await pool.query("SELECT 1");res.json({status:"ok",database:"connected",service:"estate-inertia-api"});}catch{res.status(503).json({status:"error",database:"unavailable"});}});
+app.use("/api/properties",propertiesRouter);
+app.use((_req,res)=>res.status(404).json({error:"Route not found"}));
+app.use((err:unknown,_req:express.Request,res:express.Response,_next:express.NextFunction)=>{console.error(err);const msg=err instanceof Error?err.message:"Internal server error";if(msg==="Origin not allowed by CORS")return res.status(403).json({error:msg});res.status(500).json({error:"Internal server error"});});
+const port=Number(process.env.PORT??10000);await initializeSchema();app.listen(port,()=>console.log(`Estate Inertia API listening on ${port}`));
+async function shutdown(){await pool.end();process.exit(0)}process.on("SIGTERM",shutdown);process.on("SIGINT",shutdown);
