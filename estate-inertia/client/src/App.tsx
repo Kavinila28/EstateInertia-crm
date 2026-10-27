@@ -1,10 +1,28 @@
 import { useMemo, useState } from 'react';
 import {
-  Activity, ArrowDownRight, ArrowUpRight, Bell, Building2,
-  CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight,
-  CircleHelp, Command, FileText, Filter, Home, LayoutDashboard,
-  Map, Menu, MessageCircle, MoreHorizontal, Plus, Search, Settings,
-  ShieldCheck, Sparkles, Users, Wallet, X
+  Activity,
+  ArrowUpRight,
+  Bell,
+  Building2,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Command,
+  FileText,
+  Filter,
+  LayoutDashboard,
+  Map,
+  Menu,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Users,
+  X,
 } from 'lucide-react';
 
 type Property = {
@@ -29,7 +47,7 @@ const initialProperties: Property[] = [
     area: '1,200 sq.ft',
     price: '₹48.0L',
     status: 'Available',
-    updated: '12 min ago'
+    updated: '12 min ago',
   },
   {
     id: 'EI-1002',
@@ -40,7 +58,7 @@ const initialProperties: Property[] = [
     area: '1,040 sq.ft',
     price: '₹82.5L',
     status: 'Reserved',
-    updated: '1 hr ago'
+    updated: '1 hr ago',
   },
   {
     id: 'EI-1003',
@@ -51,7 +69,7 @@ const initialProperties: Property[] = [
     area: '1,500 sq.ft',
     price: '₹60.0L',
     status: 'Available',
-    updated: 'Yesterday'
+    updated: 'Yesterday',
   },
   {
     id: 'EI-1004',
@@ -62,7 +80,7 @@ const initialProperties: Property[] = [
     area: '2,100 sq.ft',
     price: '₹1.42Cr',
     status: 'Sold',
-    updated: 'Yesterday'
+    updated: 'Yesterday',
   },
   {
     id: 'EI-1005',
@@ -73,8 +91,8 @@ const initialProperties: Property[] = [
     area: '900 sq.ft',
     price: '₹31.5L',
     status: 'Available',
-    updated: '2 days ago'
-  }
+    updated: '2 days ago',
+  },
 ];
 
 const nav = [
@@ -85,18 +103,18 @@ const nav = [
       ['Properties', Building2],
       ['Projects', Map],
       ['Leads', Users],
-      ['Follow-ups', CalendarDays]
-    ] as const
+      ['Follow-ups', CalendarDays],
+    ],
   },
   {
     title: 'MANAGE',
     items: [
       ['Documents', FileText],
       ['Analytics', Activity],
-      ['AI Assistant', Sparkles]
-    ] as const
-  }
-];
+      ['AI Assistant', Sparkles],
+    ],
+  },
+] as const;
 
 function BrandMark() {
   return (
@@ -135,17 +153,17 @@ function App() {
           `${p.name} ${p.project} ${p.location} ${p.id}`
             .toLowerCase()
             .includes(query.toLowerCase()) &&
-          (status === 'All statuses' || p.status === status)
+          (status === 'All statuses' || p.status === status),
       ),
-    [properties, query, status]
+    [properties, query, status],
   );
 
   const addProperty = () => {
     if (!newName.trim() || !newProject.trim()) return;
 
-    setProperties((p) => [
+    setProperties((current) => [
       {
-        id: `EI-${1000 + p.length + 1}`,
+        id: `EI-${1000 + current.length + 1}`,
         name: newName,
         project: newProject,
         location: 'Location to be added',
@@ -153,18 +171,17 @@ function App() {
         area: '—',
         price: 'Not set',
         status: 'Available',
-        updated: 'Just now'
+        updated: 'Just now',
       },
-      ...p
+      ...current,
     ]);
 
     setNewName('');
     setNewProject('');
     setShowAdd(false);
     setNotice(
-      'Property added to this preview. Connect the API to save records permanently.'
+      'Property added to this preview. Connect the API to save records permanently.',
     );
-    setTimeout(() => setNotice(''), 5000);
   };
 
   return (
@@ -258,7 +275,9 @@ function App() {
             EI
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-xs font-semibold">Workspace Admin</div>
+            <div className="truncate text-xs font-semibold">
+              Workspace Admin
+            </div>
             <div className="truncate text-[10px] text-slate-500">
               Company administrator
             </div>
@@ -268,7 +287,7 @@ function App() {
             title="Settings"
             onClick={() =>
               setNotice(
-                'Settings will be connected to your account profile in the next phase.'
+                'Settings will be connected to your account profile in the next phase.',
               )
             }
           >
@@ -312,9 +331,7 @@ function App() {
             <button
               className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100"
               aria-label="Notifications"
-              onClick={() =>
-                setNotice('You are all caught up on this preview.')
-              }
+              onClick={() => setNotice('You are all caught up on this preview.')}
             >
               <Bell size={18} />
               <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#4f8a6c] ring-2 ring-white" />
@@ -374,31 +391,31 @@ function App() {
                     value: String(properties.length).padStart(2, '0'),
                     note: 'In this preview',
                     icon: Building2,
-                    trend: '+8.2%'
+                    trend: '+8.2%',
                   },
                   {
                     label: 'Available units',
                     value: String(
-                      properties.filter((p) => p.status === 'Available').length
+                      properties.filter((p) => p.status === 'Available').length,
                     ).padStart(2, '0'),
                     note: 'Tracked by status',
                     icon: Check,
-                    trend: 'Live status'
+                    trend: 'Live status',
                   },
                   {
                     label: 'Active leads',
                     value: '12',
                     note: 'Sample dashboard metric',
                     icon: Users,
-                    trend: '+12.4%'
+                    trend: '+12.4%',
                   },
                   {
                     label: 'Follow-ups due',
                     value: '04',
                     note: 'Sample dashboard metric',
                     icon: CalendarDays,
-                    trend: 'Today'
-                  }
+                    trend: 'Today',
+                  },
                 ].map((item, i) => (
                   <div
                     key={item.label}
@@ -475,7 +492,7 @@ function App() {
                         className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"
                         onClick={() =>
                           setNotice(
-                            'Advanced filters will be added with the inventory API.'
+                            'Advanced filters will be added with the inventory API.',
                           )
                         }
                         aria-label="More filters"
@@ -501,6 +518,7 @@ function App() {
                           <th className="px-4 py-3 font-semibold">Updated</th>
                         </tr>
                       </thead>
+
                       <tbody className="divide-y divide-slate-100">
                         {filtered.map((p) => (
                           <tr
@@ -522,6 +540,7 @@ function App() {
                                 </div>
                               </div>
                             </td>
+
                             <td className="px-4 py-4">
                               <div className="whitespace-nowrap text-xs font-medium">
                                 {p.project}
@@ -530,12 +549,14 @@ function App() {
                                 {p.location}
                               </div>
                             </td>
+
                             <td className="whitespace-nowrap px-4 py-4 text-xs text-slate-600">
                               {p.area}
                             </td>
                             <td className="whitespace-nowrap px-4 py-4 text-xs font-semibold">
                               {p.price}
                             </td>
+
                             <td className="px-4 py-4">
                               <span
                                 className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[10px] font-medium ${
@@ -558,6 +579,7 @@ function App() {
                                 {p.status}
                               </span>
                             </td>
+
                             <td className="whitespace-nowrap px-4 py-4 text-[10px] text-slate-400">
                               {p.updated}
                             </td>
@@ -568,7 +590,10 @@ function App() {
 
                     {filtered.length === 0 && (
                       <div className="px-6 py-12 text-center">
-                        <Search size={22} className="mx-auto text-slate-300" />
+                        <Search
+                          size={22}
+                          className="mx-auto text-slate-300"
+                        />
                         <p className="mt-3 text-sm font-medium">
                           No properties found
                         </p>
@@ -611,7 +636,7 @@ function App() {
                         aria-label="Activity options"
                         onClick={() =>
                           setNotice(
-                            'Activity history will be stored once the backend is connected.'
+                            'Activity history will be stored once the backend is connected.',
                           )
                         }
                       >
@@ -621,9 +646,11 @@ function App() {
                         />
                       </button>
                     </div>
+
                     <p className="mt-1 text-[11px] text-slate-400">
                       Recent changes across your workspace
                     </p>
+
                     <div className="mt-5 space-y-5">
                       {[
                         {
@@ -631,41 +658,44 @@ function App() {
                           color: 'bg-[#e9f3ec] text-[#4e8061]',
                           title: 'Property added',
                           desc: 'Plot 018 · North Avenue',
-                          time: '12 min ago'
+                          time: '12 min ago',
                         },
                         {
                           icon: Users,
                           color: 'bg-[#eef0fb] text-[#646fa5]',
                           title: 'Lead status updated',
                           desc: 'Priya S. · Site visit scheduled',
-                          time: '46 min ago'
+                          time: '46 min ago',
                         },
                         {
                           icon: FileText,
                           color: 'bg-[#fff4df] text-[#b08336]',
                           title: 'Document uploaded',
                           desc: 'Greenfield · Layout plan',
-                          time: '2 hrs ago'
-                        }
-                      ].map((a) => (
-                        <div key={a.title} className="flex gap-3">
+                          time: '2 hrs ago',
+                        },
+                      ].map((item) => (
+                        <div key={item.title} className="flex gap-3">
                           <div
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${a.color}`}
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${item.color}`}
                           >
-                            <a.icon size={15} />
+                            <item.icon size={15} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium">{a.title}</div>
+                            <div className="text-xs font-medium">
+                              {item.title}
+                            </div>
                             <div className="mt-1 truncate text-[11px] text-slate-500">
-                              {a.desc}
+                              {item.desc}
                             </div>
                             <div className="mt-1.5 text-[10px] text-slate-400">
-                              {a.time}
+                              {item.time}
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
+
                     <button
                       onClick={() => setActive('Analytics')}
                       className="mt-5 w-full rounded-lg border border-slate-200 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
@@ -682,8 +712,8 @@ function App() {
                       Your property data, clearer.
                     </div>
                     <p className="mt-2 text-[11px] leading-5 text-white/70">
-                      Keep project details, unit availability and team ownership
-                      connected in one place.
+                      Keep project details, unit availability and team
+                      ownership connected in one place.
                     </p>
                     <button
                       onClick={() => setActive('AI Assistant')}
@@ -721,6 +751,7 @@ function App() {
                   <Building2 size={22} />
                 )}
               </div>
+
               <h1 className="mt-5 text-2xl font-semibold tracking-tight">
                 {active}
               </h1>
@@ -729,10 +760,12 @@ function App() {
                 navigation is in place; its database-backed workflows will be
                 implemented in the next development phases.
               </p>
+
               <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#f3f5f6] px-3 py-1.5 text-[11px] font-medium text-slate-500">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                 UI scaffold · API integration pending
               </div>
+
               <div className="mt-8">
                 <button
                   onClick={() => setActive('Overview')}
