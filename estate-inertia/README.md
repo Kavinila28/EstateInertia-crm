@@ -30,4 +30,3 @@ A responsive real-estate CRM starter inspired by the clean property-workspace ap
 
 ## Brand
 Estate Inertia
-Contact supplied for initial branding: blavenlokesh@gmail.com · +91 8220699083
